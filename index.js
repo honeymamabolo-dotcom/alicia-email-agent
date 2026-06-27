@@ -1,4 +1,4 @@
-require('dotenv').config();
+    require('dotenv').config();
 const express = require('express');
 const twilio = require('twilio');
 const Anthropic = require('@anthropic-ai/sdk');
@@ -10,10 +10,12 @@ app.use(express.json());
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+const REDIRECT_URI = 'https://alicia-email-agent-production.up.railway.app/auth/callback';
+
 const oauth2Client = new google.auth.OAuth2(
   process.env.GMAIL_CLIENT_ID,
   process.env.GMAIL_CLIENT_SECRET,
-  process.env.RAILWAY_URL + '/auth/callback'
+  REDIRECT_URI
 );
 
 const tokens = {};
@@ -23,7 +25,8 @@ app.get('/auth/gmail', (req, res) => {
   const url = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: ['https://www.googleapis.com/auth/gmail.modify'],
-    state: account
+    state: account,
+    prompt: 'consent'
   });
   res.redirect(url);
 });
@@ -65,7 +68,7 @@ app.post('/webhook', async (req, res) => {
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 1024,
-    system: `You are Alicia, a personal AI email assistant. You help manage emails via WhatsApp. ${emailContext ? 'Here are the latest emails:\n' + emailContext : ''}`,
+    system: `You are Alicia, a personal AI email assistant. You help manage emails via WhatsApp.${emailContext ? ' Here are the latest emails:\n' + emailContext : ''}`,
     messages: [{ role: 'user', content: message }]
   });
 
